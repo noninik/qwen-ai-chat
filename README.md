@@ -1,5 +1,3 @@
-# qwen-ai-chat
-qwen-ai-chat
 # 🤖 AI Chat — Qwen3-Coder
 
 AI-чат на основе модели Qwen3-Coder от Alibaba.
