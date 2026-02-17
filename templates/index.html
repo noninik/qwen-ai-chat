@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Чат — Qwen3</title>
     <link rel="stylesheet" href="/static/style.css">
-    <!-- Подсветка кода -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
-    <!-- Сайдбар с чатами -->
+    <!-- Сайдбар -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3>💬 Чаты</h3>
@@ -20,17 +19,26 @@
         <div class="chat-list">
             {% if chat_list %}
                 {% for chat in chat_list %}
-                <a href="/chat/{{ chat.id }}" class="chat-item {% if current_chat_id == chat.id %}active{% endif %}">
-                    <span class="chat-title">{{ chat.title }}</span>
-                    <a href="/delete/{{ chat.id }}" class="delete-btn" onclick="return confirm('Удалить чат?')">🗑️</a>
-                </a>
+                <div class="chat-item-wrapper">
+                    <a href="/chat/{{ chat.id }}" class="chat-item {% if current_chat_id == chat.id %}active{% endif %}">
+                        <span class="chat-title">
+                            {% if chat.has_memory %}🧠{% endif %}
+                            {{ chat.title }}
+                        </span>
+                        <span class="chat-meta">{{ chat.msg_count }} 💬</span>
+                    </a>
+                    <div class="chat-actions">
+                        <a href="/continue/{{ chat.id }}" class="continue-btn" title="Продолжить в новом чате">🔄</a>
+                        <a href="/delete/{{ chat.id }}" class="delete-btn" title="Удалить" onclick="return confirm('Удалить чат?')">🗑️</a>
+                    </div>
+                </div>
                 {% endfor %}
             {% else %}
                 <p class="no-chats">Пока нет чатов</p>
             {% endif %}
         </div>
         <div class="token-counter">
-            <span>📊 Токены: ~{{ token_count }}</span>
+            <span>📊 Всего токенов: ~{{ token_count }}</span>
         </div>
     </div>
 
@@ -49,7 +57,7 @@
             </div>
         </header>
 
-        <!-- Настройки (модель + роль) -->
+        <!-- Настройки -->
         <div class="settings-bar">
             <div class="setting">
                 <label>🧠 Модель:</label>
@@ -69,7 +77,35 @@
             </div>
         </div>
 
-        <!-- Окно чата -->
+        <!-- Контекст-бар -->
+        <div class="context-bar">
+            {% if context_info %}
+            <div class="context-info">
+                <span>💬 {{ context_info.messages }} сообщений</span>
+                <span>📊 ~{{ context_info.tokens }} токенов</span>
+                {% if context_info.compressed %}
+                <span class="memory-badge">🧠 Память ({{ context_info.summaries_count }} саммари)</span>
+                {% endif %}
+            </div>
+            <div class="context-progress">
+                <div class="context-progress-bar" style="width: {{ context_info.percent }}%"></div>
+            </div>
+            {% if context_info.percent > 70 %}
+            <div class="context-warning">
+                ⚠️ Контекст заполняется. 
+                <a href="/continue/{{ session_id }}">Продолжить в новом чате с памятью →</a>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            {% if continued_from %}
+            <div class="continued-notice">
+                🔄 Продолжение чата "{{ continued_from }}" — нейронка помнит предыдущий разговор
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Чат -->
         <div class="chat-box" id="chatBox">
             {% if messages %}
                 {% for msg in messages %}
@@ -90,23 +126,28 @@
                 {% endfor %}
             {% else %}
                 <div class="welcome">
+                    {% if continued_from %}
+                    <h2>🔄 Продолжаем!</h2>
+                    <p>Я помню наш прошлый разговор. Можешь продолжать с того места, где остановились!</p>
+                    {% else %}
                     <h2>👋 Привет!</h2>
                     <p>Выбери модель и роль сверху, затем задай вопрос!</p>
+                    {% endif %}
                     <div class="suggestions">
-                        <button onclick="fillQuestion('Напиши код калькулятора на Python')">
-                            💻 Напиши код калькулятора
+                        <button onclick="fillQuestion('Напиши полный код TODO-приложения на Python')">
+                            💻 Напиши TODO-приложение
                         </button>
                         <button onclick="fillQuestion('Объясни что такое API простыми словами')">
                             📖 Что такое API?
                         </button>
-                        <button onclick="fillQuestion('Придумай идею для стартапа')">
+                        <button onclick="fillQuestion('Напиши полный HTML/CSS/JS сайт-портфолио')">
+                            🌐 Сайт-портфолио
+                        </button>
+                        <button onclick="fillQuestion('Придумай идею для стартапа и распиши бизнес-план')">
                             🚀 Идея для стартапа
                         </button>
-                        <button onclick="fillQuestion('Переведи на английский: Привет, как дела?')">
-                            🌐 Переведи текст
-                        </button>
-                        <button onclick="fillQuestion('Напиши смешную шутку про программистов')">
-                            😄 Расскажи шутку
+                        <button onclick="fillQuestion('Напиши игру змейку на JavaScript с полным кодом')">
+                            🎮 Игра змейка на JS
                         </button>
                         <button onclick="fillQuestion('Проанализируй плюсы и минусы удалённой работы')">
                             📊 Аналитика
@@ -116,7 +157,7 @@
             {% endif %}
         </div>
 
-        <!-- Форма ввода -->
+        <!-- Форма -->
         <form action="/chat" method="post" class="input-form" id="chatForm" onsubmit="showLoading()">
             <input type="hidden" name="session_id" value="{{ session_id }}">
             <input
@@ -134,7 +175,7 @@
             </button>
         </form>
 
-        <!-- Индикатор загрузки -->
+        <!-- Загрузка -->
         <div class="loading" id="loading" style="display: none;">
             <div class="loading-dots">
                 <span>🤖 Думаю</span>
