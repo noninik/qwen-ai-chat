@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Чат — Qwen3</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Чат</h1>
+            <p class="subtitle">Powered by Qwen3-Coder</p>
+        </header>
+
+        <div class="chat-box" id="chatBox">
+            {% if user_message %}
+            <div class="message user-msg">
+                <div class="avatar">👤</div>
+                <div class="bubble">{{ user_message }}</div>
+            </div>
+            {% endif %}
+
+            {% if bot_reply %}
+            <div class="message bot-msg">
+                <div class="avatar">🤖</div>
+                <div class="bubble">{{ bot_reply }}</div>
+            </div>
+            {% endif %}
+
+            {% if not user_message and not bot_reply %}
+            <div class="welcome">
+                <h2>👋 Привет!</h2>
+                <p>Задай мне любой вопрос — я постараюсь помочь!</p>
+                <div class="suggestions">
+                    <button onclick="fillQuestion('Напиши код калькулятора на Python')">
+                        💻 Напиши код калькулятора
+                    </button>
+                    <button onclick="fillQuestion('Объясни что такое API простыми словами')">
+                        📖 Что такое API?
+                    </button>
+                    <button onclick="fillQuestion('Придумай идею для стартапа')">
+                        🚀 Идея для стартапа
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <form action="/chat" method="post" class="input-form">
+            <input
+                type="text"
+                name="user_message"
+                id="userInput"
+                placeholder="Написать сообщение..."
+                autocomplete="off"
+                required
+            >
+            <button type="submit">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="white"/>
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function fillQuestion(text) {
+            document.getElementById('userInput').value = text;
+            document.getElementById('userInput').focus();
+        }
+    </script>
+</body>
+</html>
